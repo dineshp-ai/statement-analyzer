@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Statement Analyzer — Demo</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f9fafb;color:#111827;min-height:100vh}
+header{background:#fff;border-bottom:1px solid #e5e7eb;padding:16px 24px;display:flex;align-items:center;justify-content:space-between}
+.logo{display:flex;align-items:center;gap:12px}
+.logo h1{font-size:20px;font-weight:700}
+.logo p{font-size:12px;color:#6b7280}
+main{max-width:1100px;margin:0 auto;padding:32px 24px}
+
+/* Landing */
+.hero{text-align:center;margin-bottom:40px}
+.hero h2{font-size:32px;font-weight:700;margin-bottom:12px}
+.hero p{font-size:16px;color:#6b7280;max-width:500px;margin:0 auto}
+.dropzone{border:2px dashed #d1d5db;border-radius:12px;padding:48px 24px;text-align:center;cursor:pointer;background:#fafafa;transition:all .2s}
+.dropzone:hover{border-color:#3b82f6;background:#eff6ff}
+.dropzone .icon{font-size:36px;margin-bottom:12px}
+.dropzone .main-text{font-size:18px;font-weight:600;color:#374151}
+.dropzone .sub-text{color:#6b7280;margin-top:8px}
+.privacy-badge{margin-top:16px;padding:8px 16px;background:#dcfce7;border-radius:8px;color:#166534;font-size:13px;display:inline-block}
+.demo-btn{margin-top:16px;padding:12px 24px;background:#3b82f6;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer}
+.demo-btn:hover{background:#2563eb}
+.features{margin-top:48px;display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.feature{text-align:center;padding:24px;background:#fff;border-radius:12px;border:1px solid #f3f4f6}
+.feature .fi{font-size:32px;margin-bottom:12px}
+.feature h3{margin-bottom:8px;font-size:16px;font-weight:600}
+.feature p{font-size:14px;color:#6b7280}
+
+/* Dashboard */
+.hidden{display:none}
+.redaction-banner{background:#dcfce7;border-radius:8px;padding:12px 20px;margin-bottom:24px;display:flex;align-items:center;gap:12px;border:1px solid #bbf7d0}
+.redaction-banner strong{color:#166534}
+.redaction-banner span{color:#15803d;font-size:14px}
+.summary-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+.card{background:#fff;border-radius:12px;padding:24px;box-shadow:0 1px 3px rgba(0,0,0,.1);border:1px solid #f3f4f6}
+.card .label{color:#6b7280;font-size:13px}
+.card .value{font-size:28px;font-weight:700;margin-top:8px}
+.card.income{border-left:4px solid #22c55e}
+.card.income .value{color:#16a34a}
+.card.expense{border-left:4px solid #ef4444}
+.card.expense .value{color:#dc2626}
+.card.net-pos{border-left:4px solid #22c55e}
+.card.net-pos .value{color:#16a34a}
+.card.net-neg{border-left:4px solid #ef4444}
+.card.net-neg .value{color:#dc2626}
+
+/* Tabs */
+.tabs{border-bottom:1px solid #e5e7eb;margin-bottom:24px;display:flex;gap:0}
+.tab{padding:10px 20px;border:none;border-bottom:3px solid transparent;background:none;cursor:pointer;font-size:14px;color:#6b7280}
+.tab.active{border-bottom-color:#3b82f6;font-weight:700;color:#1e40af}
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+/* Charts area */
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.chart-card{background:#fff;border-radius:12px;padding:24px;box-shadow:0 1px 3px rgba(0,0,0,.1);border:1px solid #f3f4f6}
+.chart-card h3{margin-bottom:16px;font-size:16px;font-weight:600}
+.chart-card.full{grid-column:1/-1}
+
+/* Category table */
+table{width:100%;border-collapse:collapse;font-size:14px}
+thead tr{border-bottom:2px solid #e5e7eb}
+th{text-align:left;padding:8px}
+th.r{text-align:right}
+td{padding:8px;border-bottom:1px solid #f3f4f6}
+td.r{text-align:right}
+.color-dot{width:12px;height:12px;border-radius:3px;display:inline-block;margin-right:8px;vertical-align:middle}
+.bar-bg{width:60px;height:6px;background:#f3f4f6;border-radius:3px;overflow:hidden;display:inline-block;margin-right:8px;vertical-align:middle}
+.bar-fill{height:100%;border-radius:3px}
+.cat-badge{padding:2px 8px;border-radius:12px;font-size:12px;background:#f3f4f6;color:#374151}
+.amt-credit{color:#16a34a;font-weight:600}
+.amt-debit{font-weight:600}
+
+/* Merchant bars */
+.merchant-bar-row{display:flex;align-items:center;margin-bottom:8px;gap:8px}
+.merchant-name{width:180px;font-size:13px;text-align:right;flex-shrink:0}
+.merchant-bar-bg{flex:1;height:20px;background:#f3f4f6;border-radius:4px;overflow:hidden}
+.merchant-bar-fill{height:100%;background:#3b82f6;border-radius:4px;min-width:2px}
+.merchant-amt{width:80px;font-size:13px;font-weight:600;flex-shrink:0}
+
+.txn-scroll{max-height:500px;overflow-y:auto}
+.reset-btn{padding:8px 16px;border-radius:8px;border:1px solid #d1d5db;background:#fff;cursor:pointer;font-size:14px;color:#374151}
+footer{text-align:center;padding:24px;color:#9ca3af;font-size:13px}
+
+canvas{max-width:100%;height:auto!important}
+
+@media(max-width:768px){
+  .summary-cards,.features,.chart-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span style="font-size:24px">&#128202;</span>
+    <div><h1>Statement Analyzer</h1><p>Privacy-first bank statement analysis</p></div>
+  </div>
+  <button class="reset-btn hidden" id="resetBtn" onclick="resetApp()">Analyze Another</button>
+</header>
+
+<main>
+  <!-- Landing Page -->
+  <div id="landing">
+    <div class="hero">
+      <h2>See where your money goes</h2>
+      <p>Upload your bank statement. PII is redacted first, then your spending is analyzed with interactive charts. Everything runs in your browser — nothing leaves your device.</p>
+    </div>
+
+    <div class="dropzone" id="dropzone" ondrop="handleDrop(event)" ondragover="event.preventDefault();this.style.borderColor='#3b82f6';this.style.background='#eff6ff'" ondragleave="this.style.borderColor='#d1d5db';this.style.background='#fafafa'">
+      <div class="icon">&#128196;</div>
+      <p class="main-text">Drop your bank statement here</p>
+      <p class="sub-text">PDF or CSV format. Supports Chase, Bank of America, Wells Fargo, and most banks.</p>
+      <p class="privacy-badge">&#128274; 100% private — processed entirely in your browser</p>
+      <input type="file" id="fileInput" accept=".csv,.pdf" style="display:none" onchange="handleFile(this.files[0])">
+    </div>
+    <div style="text-align:center">
+      <button class="demo-btn" onclick="loadDemo()">&#9654; Try with Sample Data</button>
+    </div>
+
+    <div class="features">
+      <div class="feature"><div class="fi">&#128274;</div><h3>Redact PII</h3><p>Account numbers, SSNs, addresses, and personal info are stripped before any analysis.</p></div>
+      <div class="feature"><div class="fi">&#128202;</div><h3>Categorize</h3><p>Transactions are auto-categorized into groceries, dining, subscriptions, and 15+ categories.</p></div>
+      <div class="feature"><div class="fi">&#128200;</div><h3>Visualize</h3><p>Interactive pie charts, bar graphs, merchant rankings, and subscription detection.</p></div>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboard" class="hidden">
+    <div class="redaction-banner" id="redactionBanner" style="display:none">
+      <span style="font-size:20px">&#9989;</span>
+      <div><strong>PII Redacted</strong> <span id="redactionInfo"></span></div>
+    </div>
+
+    <div class="summary-cards">
+      <div class="card income"><p class="label">Total Income</p><p class="value" id="totalIncome"></p></div>
+      <div class="card expense"><p class="label">Total Expenses</p><p class="value" id="totalExpenses"></p></div>
+      <div class="card" id="netCard"><p class="label">Net Flow</p><p class="value" id="netFlow"></p></div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('overview',this)">Overview</button>
+      <button class="tab" onclick="switchTab('merchants',this)">Top Merchants</button>
+      <button class="tab" onclick="switchTab('subscriptions',this)">Subscriptions</button>
+      <button class="tab" onclick="switchTab('transactions',this)">All Transactions</button>
+    </div>
+
+    <div id="tab-overview" class="tab-content active">
+      <div class="chart-grid">
+        <div class="chart-card"><h3>Spending by Category</h3><canvas id="pieChart"></canvas></div>
+        <div class="chart-card"><h3>Income vs Expenses</h3><canvas id="barChart"></canvas></div>
+        <div class="chart-card full"><h3>Category Breakdown</h3><div id="categoryTable"></div></div>
+      </div>
+    </div>
+    <div id="tab-merchants" class="tab-content">
+      <div class="chart-card"><h3>Top Merchants by Spending</h3><div id="merchantBars"></div></div>
+    </div>
+    <div id="tab-subscriptions" class="tab-content">
+      <div class="chart-card"><h3>Detected Recurring Charges</h3><p id="subTotal" style="color:#6b7280;font-size:14px;margin-bottom:16px"></p><div id="subTable"></div></div>
+    </div>
+    <div id="tab-transactions" class="tab-content">
+      <div class="chart-card"><h3 id="txnCount"></h3><div class="txn-scroll" id="txnTable"></div></div>
+    </div>
+  </div>
+</main>
+
+<footer>Your data never leaves your browser. No servers. No tracking. No accounts.</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script>
+// ===== SAMPLE DATA =====
+const SAMPLE_CSV = `Date,Description,Amount
+11/01/2024,DIRECT DEPOSIT EMPLOYER ACH,3200.00
+11/02/2024,WALMART SUPERCENTER #1234,-85.43
+11/03/2024,SHELL OIL 57442,-42.15
+11/04/2024,NETFLIX.COM,-15.99
+11/05/2024,SPOTIFY USA,-10.99
+11/06/2024,CHICK-FIL-A #02145,-12.50
+11/07/2024,AMAZON.COM AMZN.COM/BILL,-67.89
+11/08/2024,STARBUCKS STORE 12345,-6.75
+11/09/2024,KROGER FUEL #1234,-38.00
+11/10/2024,AT&T WIRELESS BILL,-89.99
+11/11/2024,PLANET FITNESS MONTHLY,-24.99
+11/12/2024,CVS/PHARMACY #4567,-23.45
+11/13/2024,PUBLIX SUPER MARKETS,-112.33
+11/14/2024,CHIPOTLE ONLINE,-11.20
+11/15/2024,DIRECT DEPOSIT EMPLOYER ACH,3200.00
+11/16/2024,UBER TRIP HELP.UBER,-18.50
+11/17/2024,BEST BUY #0789,-249.99
+11/18/2024,GEICO AUTO INSURANCE,-145.00
+11/19/2024,DOORDASH DASHER,-32.44
+11/20/2024,NETFLIX.COM,-15.99
+11/21/2024,TARGET #1456,-55.60
+11/22/2024,HOME DEPOT #4321,-89.00
+11/23/2024,DUNKIN DONUTS #7890,-5.25
+11/24/2024,COMCAST XFINITY,-79.99
+11/25/2024,WALMART SUPERCENTER #1234,-95.12
+11/26/2024,AMAZON PRIME MEMBERSHIP,-14.99
+11/27/2024,PETCO ANIMAL SUPPLIES,-42.30
+11/28/2024,GREAT CLIPS #2345,-22.00
+11/29/2024,AMC THEATERS #12,-28.00
+11/30/2024,RENT PAYMENT CHECK 1045,-1500.00`;
+
+// ===== CATEGORIZER =====
+const RULES=[
+{k:['walmart','target','kroger','publix','aldi','trader joe','whole foods','safeway','costco','heb','meijer','wegmans','food lion','giant','grocery','market','fresh'],c:'Groceries'},
+{k:['mcdonald','starbucks','chick-fil-a','chipotle','taco bell','wendy','burger king','subway','dunkin','panera','domino','pizza hut','olive garden','applebee','restaurant','cafe','grubhub','doordash','ubereats','uber eats','wingstop','popeyes','five guys','sonic','panda express'],c:'Dining'},
+{k:['shell','exxon','chevron','bp ','mobil','sunoco','speedway','wawa','gas','fuel','uber','lyft','parking','toll','transit'],c:'Transportation'},
+{k:['amazon','ebay','etsy','best buy','home depot','lowe','ikea','ross','tj maxx','old navy','gap','nike','nordstrom','macy','kohl','target'],c:'Shopping'},
+{k:['netflix','spotify','hulu','disney','apple.com','itunes','google play','youtube','adobe','microsoft','amazon prime','audible','paramount','peacock'],c:'Subscriptions'},
+{k:['electric','power','water','comcast','xfinity','spectrum','at&t','att','verizon','t-mobile','internet','cable'],c:'Utilities'},
+{k:['rent','mortgage','hoa','property tax','lease'],c:'Housing'},
+{k:['cvs','walgreens','pharmacy','doctor','hospital','medical','dental','clinic'],c:'Healthcare'},
+{k:['geico','state farm','progressive','allstate','insurance'],c:'Insurance'},
+{k:['gym','planet fitness','la fitness','equinox','peloton','fitness'],c:'Fitness'},
+{k:['petco','petsmart','vet','chewy','pet'],c:'Pets'},
+{k:['salon','barber','hair','nail','spa','great clips','supercuts'],c:'Personal Care'},
+{k:['amc','regal','cinema','movie','theater','concert','ticketmaster','bowling','museum','zoo'],c:'Entertainment'},
+{k:['tuition','university','college','school','udemy','coursera'],c:'Education'},
+{k:['payroll','direct dep','salary','wage','ach credit','employer','deposit'],c:'Income'},
+{k:['transfer','zelle','venmo','paypal','cash app','wire'],c:'Transfers'},
+{k:['fee','overdraft','nsf','atm fee','service charge','late fee'],c:'Fees'},
+];
+const COLORS={Groceries:'#4CAF50',Dining:'#FF9800',Transportation:'#2196F3',Shopping:'#E91E63',Subscriptions:'#9C27B0',Utilities:'#607D8B',Housing:'#795548',Healthcare:'#00BCD4',Insurance:'#FF5722',Education:'#3F51B5',Entertainment:'#FFC107',Fitness:'#8BC34A',Pets:'#CDDC39','Personal Care':'#F48FB1',Income:'#66BB6A',Transfers:'#90A4AE',Fees:'#EF5350',Other:'#BDBDBD'};
+
+function categorize(d){const l=d.toLowerCase();for(const r of RULES)for(const k of r.k)if(l.includes(k))return r.c;return'Other'}
+function fmt(n){return'$'+Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
+
+// ===== PII REDACTOR =====
+function redactPII(text){
+  let r=text,stats=[],total=0;
+  const patterns=[
+    {n:'SSN',re:/\b\d{3}-?\d{2}-?\d{4}\b/g,rep:'***-**-****'},
+    {n:'Card',re:/\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b/g,rep:'****-****-****-****'},
+    {n:'Account',re:/(?:account|acct|a\/c)[\s#:]*(\d{8,17})/gi,rep:'Account ***'},
+    {n:'Email',re:/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g,rep:'***@***'},
+    {n:'Phone',re:/(?:\+1[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}\b/g,rep:'(***) ***-****'},
+  ];
+  for(const p of patterns){const m=r.match(p.re);if(m&&m.length){stats.push({type:p.n,count:m.length});total+=m.length;r=r.replace(p.re,p.rep)}}
+  return{text:r,stats,total};
+}
+
+// ===== CSV PARSER =====
+function parseCSV(text){
+  const lines=text.trim().split('\n');
+  if(lines.length<2)return[];
+  const h=lines[0].toLowerCase().split(',').map(c=>c.trim().replace(/"/g,''));
+  const di=h.findIndex(c=>/date/i.test(c));
+  const dsi=h.findIndex(c=>/desc|memo|narr|detail|payee/i.test(c));
+  const ai=h.findIndex(c=>/amount|sum|value/i.test(c));
+  const dbi=h.findIndex(c=>/debit|withdrawal/i.test(c));
+  const ci=h.findIndex(c=>/credit|deposit/i.test(c));
+  const txns=[];
+  for(let i=1;i<lines.length;i++){
+    const v=lines[i].split(',').map(s=>s.trim().replace(/^"|"$/g,''));
+    if(v.length<2)continue;
+    const date=di>=0?v[di]:'';
+    const desc=dsi>=0?v[dsi]:'';
+    let amount,type;
+    if(dbi>=0&&ci>=0){const db=parseFloat((v[dbi]||'0').replace(/[^0-9.-]/g,''));const cr=parseFloat((v[ci]||'0').replace(/[^0-9.-]/g,''));if(db>0){amount=db;type='debit'}else{amount=cr;type='credit'}}
+    else if(ai>=0){amount=parseFloat((v[ai]||'0').replace(/[^0-9.-]/g,''));type=amount<0?'debit':'credit';amount=Math.abs(amount)}
+    else continue;
+    if(!date||amount===0)continue;
+    txns.push({date,description:desc,amount,type,category:categorize(desc)});
+  }
+  return txns;
+}
+
+// ===== ANALYSIS =====
+function analyze(txns){
+  const exp=txns.filter(t=>t.type==='debit');
+  const inc=txns.filter(t=>t.type==='credit');
+  const totalExp=exp.reduce((s,t)=>s+t.amount,0);
+  const totalInc=inc.reduce((s,t)=>s+t.amount,0);
+  // Categories
+  const cm={};
+  for(const t of exp){if(!cm[t.category])cm[t.category]={total:0,count:0};cm[t.category].total+=t.amount;cm[t.category].count++}
+  const cats=Object.entries(cm).map(([c,d])=>({category:c,total:Math.round(d.total*100)/100,count:d.count,pct:totalExp>0?Math.round(d.total/totalExp*1000)/10:0,color:COLORS[c]||'#BDBDBD'})).sort((a,b)=>b.total-a.total);
+  // Top merchants
+  const mm={};
+  for(const t of exp){const n=t.description.replace(/^(pos|ach|debit|purchase)\s+/i,'').split(/\s+/).slice(0,3).join(' ');if(!mm[n])mm[n]={total:0,count:0,cat:t.category};mm[n].total+=t.amount;mm[n].count++}
+  const merchants=Object.entries(mm).map(([n,d])=>({name:n,total:Math.round(d.total*100)/100,count:d.count,cat:d.cat})).sort((a,b)=>b.total-a.total).slice(0,15);
+  // Subscriptions
+  const rec={};
+  for(const t of exp){const k=t.description.split(/\s+/).slice(0,2).join(' ')+'_'+t.amount.toFixed(2);if(!rec[k])rec[k]={amount:t.amount,dates:[],desc:t.description.split(/\s+/).slice(0,2).join(' ')};rec[k].dates.push(t.date)}
+  const subs=Object.values(rec).filter(r=>r.dates.length>=2).map(r=>({name:r.desc,amount:r.amount,freq:r.dates.length>=3?'monthly':'recurring',annual:r.amount*12})).sort((a,b)=>b.annual-a.annual);
+  return{txns,totalInc,totalExp,net:totalInc-totalExp,cats,merchants,subs};
+}
+
+// ===== RENDERING =====
+let pieChartInst=null,barChartInst=null;
+
+function renderDashboard(result){
+  document.getElementById('landing').classList.add('hidden');
+  document.getElementById('dashboard').classList.remove('hidden');
+  document.getElementById('resetBtn').classList.remove('hidden');
+  document.getElementById('totalIncome').textContent=fmt(result.totalInc);
+  document.getElementById('totalExpenses').textContent=fmt(result.totalExp);
+  const nf=document.getElementById('netFlow');
+  const nc=document.getElementById('netCard');
+  nf.textContent=(result.net>=0?'+':'')+fmt(result.net);
+  nc.className='card '+(result.net>=0?'net-pos':'net-neg');
+
+  // Pie
+  if(pieChartInst)pieChartInst.destroy();
+  pieChartInst=new Chart(document.getElementById('pieChart'),{type:'doughnut',data:{labels:result.cats.map(c=>c.category),datasets:[{data:result.cats.map(c=>c.total),backgroundColor:result.cats.map(c=>c.color),borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,plugins:{legend:{position:'right',labels:{font:{size:12},padding:8}},tooltip:{callbacks:{label:ctx=>ctx.label+': '+fmt(ctx.parsed)+' ('+result.cats[ctx.dataIndex].pct+'%)'}}}}});
+
+  // Bar
+  if(barChartInst)barChartInst.destroy();
+  barChartInst=new Chart(document.getElementById('barChart'),{type:'bar',data:{labels:['November 2024'],datasets:[{label:'Income',data:[result.totalInc],backgroundColor:'#22c55e'},{label:'Expenses',data:[result.totalExp],backgroundColor:'#ef4444'}]},options:{responsive:true,plugins:{tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+fmt(ctx.parsed.y)}}},scales:{y:{ticks:{callback:v=>'$'+v}}}}});
+
+  // Category table
+  let html='<table><thead><tr><th>Category</th><th class="r">Amount</th><th class="r">Txns</th><th class="r">% of Spending</th></tr></thead><tbody>';
+  for(const c of result.cats){
+    html+=`<tr><td><span class="color-dot" style="background:${c.color}"></span>${c.category}</td><td class="r" style="font-weight:600">${fmt(c.total)}</td><td class="r" style="color:#6b7280">${c.count}</td><td class="r"><span class="bar-bg"><span class="bar-fill" style="width:${c.pct}%;background:${c.color}"></span></span>${c.pct}%</td></tr>`;
+  }
+  html+='</tbody></table>';
+  document.getElementById('categoryTable').innerHTML=html;
+
+  // Merchants
+  const maxM=result.merchants[0]?.total||1;
+  let mhtml='';
+  for(const m of result.merchants){
+    const w=Math.max(2,m.total/maxM*100);
+    mhtml+=`<div class="merchant-bar-row"><span class="merchant-name">${m.name}</span><div class="merchant-bar-bg"><div class="merchant-bar-fill" style="width:${w}%"></div></div><span class="merchant-amt">${fmt(m.total)}</span></div>`;
+  }
+  document.getElementById('merchantBars').innerHTML=mhtml;
+
+  // Subscriptions
+  if(result.subs.length===0){
+    document.getElementById('subTotal').textContent='No recurring charges detected. Upload multiple months for better detection.';
+    document.getElementById('subTable').innerHTML='';
+  }else{
+    const annTotal=result.subs.reduce((s,r)=>s+r.annual,0);
+    document.getElementById('subTotal').innerHTML='Projected annual subscription cost: <strong style="color:#dc2626">'+fmt(annTotal)+'</strong>';
+    let shtml='<table><thead><tr><th>Service</th><th class="r">Amount</th><th class="r">Frequency</th><th class="r">Annual Cost</th></tr></thead><tbody>';
+    for(const s of result.subs)shtml+=`<tr><td>${s.name}</td><td class="r">${fmt(s.amount)}</td><td class="r" style="color:#6b7280">${s.freq}</td><td class="r" style="font-weight:600;color:#dc2626">${fmt(s.annual)}</td></tr>`;
+    shtml+='</tbody></table>';
+    document.getElementById('subTable').innerHTML=shtml;
+  }
+
+  // Transactions
+  document.getElementById('txnCount').textContent='All Transactions ('+result.txns.length+')';
+  let thtml='<table><thead><tr><th>Date</th><th>Description</th><th>Category</th><th class="r">Amount</th></tr></thead><tbody>';
+  for(const t of result.txns){
+    thtml+=`<tr><td style="color:#6b7280;white-space:nowrap">${t.date}</td><td>${t.description}</td><td><span class="cat-badge">${t.category}</span></td><td class="r ${t.type==='credit'?'amt-credit':'amt-debit'}">${t.type==='credit'?'+':'-'}${fmt(t.amount)}</td></tr>`;
+  }
+  thtml+='</tbody></table>';
+  document.getElementById('txnTable').innerHTML=thtml;
+}
+
+function switchTab(name,btn){
+  document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ===== FILE HANDLING =====
+document.getElementById('dropzone').addEventListener('click',()=>document.getElementById('fileInput').click());
+
+function handleDrop(e){
+  e.preventDefault();
+  e.currentTarget.style.borderColor='#d1d5db';
+  e.currentTarget.style.background='#fafafa';
+  if(e.dataTransfer.files.length)handleFile(e.dataTransfer.files[0]);
+}
+
+function handleFile(file){
+  if(!file)return;
+  if(file.name.endsWith('.csv')){
+    file.text().then(text=>{
+      const{text:redacted,stats,total}=redactPII(text);
+      if(total>0){document.getElementById('redactionBanner').style.display='flex';document.getElementById('redactionInfo').textContent=stats.map(s=>s.count+' '+s.type).join(', ')+' removed before analysis'}
+      const txns=parseCSV(redacted);
+      if(txns.length===0){alert('No transactions found. Try a different CSV format.');return}
+      renderDashboard(analyze(txns));
+    });
+  }else{
+    alert('CSV supported in this demo. PDF support available in the full app.');
+  }
+}
+
+function loadDemo(){
+  const txns=parseCSV(SAMPLE_CSV);
+  renderDashboard(analyze(txns));
+}
+
+function resetApp(){
+  document.getElementById('dashboard').classList.add('hidden');
+  document.getElementById('landing').classList.remove('hidden');
+  document.getElementById('resetBtn').classList.add('hidden');
+  document.getElementById('redactionBanner').style.display='none';
+}
+</script>
+</body>
+</html>
